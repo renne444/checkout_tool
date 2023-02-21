@@ -15,13 +15,24 @@ import subprocess
 path_root = Path("/Users/dengjinxi/workspace")
 backup_dir_root = path_root / "code_read_backup"
 
+def dangerous_dir_check(path):
+    dangerous_path_group = [str(path_root), str(backup_dir_root), "/Users/dengjinxi", "Users"]
+    for str_path in dangerous_path_group:
+        if path.find(str_path) != -1 and len(path) - len(str_path) <= 1:
+            raise "fuck you"
+
+def message():
+    print("请永远记住把工作目录删掉的难堪经历")
+
 def diretory_replace(path_dir_delete, path_dir_copy):
+    dangerous_dir_check(str(path_dir_delete))
     if path_dir_delete.is_dir():
         shutil.rmtree(path_dir_delete)
     shutil.copytree(path_dir_copy, path_dir_delete)
+    print("fuck")
 
 def intelligent_relative_path_generate(change_dir):
-    change_path = Path(change_dir)
+    change_path = Path(change_dir).absolute()
     if not change_path.is_dir():
         print(f"path change error: {str(change_path)} not a dir or not exist")
         return "", False
@@ -45,10 +56,11 @@ def checkout():
     pass
 
 def backup(src_path=""):
-    print(src_path)
     if src_path == "":
         logging.error("error occur: src_path is empty")
         return
+    src_path = os.path.realpath(src_path)
+    print(src_path)
 
     # add intelligent analyze   for src_path adjustment
     temp_path, ret = intelligent_relative_path_generate(src_path)
@@ -81,14 +93,16 @@ def backup(src_path=""):
     
     backup_file_path = backup_dir_root / backup_file_name
     print(f"备份目录：将目录 {str(backup_file_path)} 替换为 {str(src_file)}")
-    diretory_replace(backup_file_path, src_file)
+    diretory_replace(backup_file_path.absolute(), src_file.absolute())
 
 def load(backup_path=""):
-    print(backup_path)
     if backup_path == "":
         logging.error("error occur: backup_path is empty")
         return
-    
+
+    backup_path = os.path.realpath(backup_path)
+    print(backup_path)
+
     (_, backup_file) = os.path.split(backup_path)
     
     file_path = backup_dir_root / backup_file 
@@ -104,7 +118,7 @@ def load(backup_path=""):
            return
         # 将src_path内容替换为file_path
         print(f"将目录{src_path}替换为{file_path}, 分支{src_branch}")
-        diretory_replace(src_path, file_path)
+        diretory_replace(src_path.absolute(), file_path.absolute())
 
     elif file_path.is_file():
         if str_path.find("tar.gz") == -1:
@@ -126,3 +140,4 @@ if __name__ == "__main__":
         load(args.load) 
     elif args.backup:
         backup(args.backup)
+    message()
